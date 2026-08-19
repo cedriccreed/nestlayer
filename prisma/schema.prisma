@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  // UUID primary key instead of autoincrement: IDs are not guessable (no
+  // sequential user counts), merge cleanly across services, and stay stable
+  // if we ever shard or import data from another database.
+  id String @id @default(uuid())
+
+  // Unique login identity. @unique lets Prisma (and PostgreSQL) reject a
+  // second account with the same email and makes lookups by email fast.
+  email String @unique
+
+  // Password hash only — never store the raw password. A String is enough
+  // because bcrypt/argon2 output is text, not a numeric type.
+  password String
+
+  // Public display name. Separate from email so the user can change how they
+  // appear without changing their login.
+  name String
+
+  // Authorization role. Default USER so sign-up cannot accidentally create
+  // an ADMIN; privilege elevation stays an explicit admin action.
+  role Role @default(USER)
+
+  // Optional because a user may not have an active session (logged out, never
+  // logged in, or token rotated). Storing it lets us revoke refresh tokens
+  // server-side by setting this field back to null.
+  refreshToken String?
+
+  // Set once at insert time. @default(now()) is handled by the database so
+  // we do not have to pass createdAt from the application.
+  createdAt DateTime @default(now())
+
+  // Prisma fills this on every update (@updatedAt), which is useful for
+  // auditing and cache invalidation without extra application code.
+  updatedAt DateTime @updatedAt
+}
+
+// Closed set of roles so invalid values cannot be stored. USER is the
+// everyday account; ADMIN is reserved for privileged operations.
+enum Role {
+  USER
+  ADMIN
+}
