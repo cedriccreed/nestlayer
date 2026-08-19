@@ -1,0 +1,31 @@
+# Docker Compose describes extra processes that run in containers (isolated
+# boxes). This file only starts PostgreSQL so you can develop NestLayer
+# without installing Postgres on the host OS.
+#
+# Usage: docker-compose up -d
+# Values like POSTGRES_USER are interpolated from the project .env file.
+
+services:
+  postgres:
+    # Official PostgreSQL 16 image from Docker Hub
+    image: postgres:16
+    # Stable name shown in `docker ps` (easier than a random hash)
+    container_name: nestlayer_db
+    # First-boot credentials: user, password, and database name.
+    # They must match DATABASE_URL in .env (user:password@.../dbname).
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      # hostPort:containerPort — Nest/Prisma on your machine use localhost:5432
+      - '5432:5432'
+    volumes:
+      # Named volume so tables survive `docker-compose down` (data is wiped
+      # only if you also pass -v / remove the volume).
+      - postgres_data:/var/lib/postgresql/data
+
+# Declares the named volume used above. Docker stores it on disk outside
+# the container filesystem.
+volumes:
+  postgres_data:
